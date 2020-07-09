@@ -48,7 +48,7 @@ module Koudoku::Subscription
             self.current_price = nil
 
             # delete the subscription.
-            customer.cancel_subscription
+            customer.subscriptions.map(&:delete)
 
             finalize_cancelation!
 
