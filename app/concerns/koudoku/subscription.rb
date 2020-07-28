@@ -126,8 +126,11 @@ module Koudoku::Subscription
                   #
                   # So if you assigned a coupon with one day free trial, and your plan has longer free trial,
                   # the coupon trial period will be assigned for this subscription instead of the plan one.
-                  subscription_attributes[:trial_period_days] = coupon.free_trial_length
-                  subscription_attributes.delete(:trial_from_plan)
+                  if coupon.free_trial_length.present?
+                    subscription_attributes[:trial_period_days] = coupon.free_trial_length
+                  elsif coupon.free_trial_ends.present?
+                    subscription_attributes[:trial_end] = coupon.free_trial_ends.to_i
+                  end
                 end
               end
 
