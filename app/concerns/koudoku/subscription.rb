@@ -116,20 +116,14 @@ module Koudoku::Subscription
               # If the class we're being included in supports coupons ..
               if respond_to? :coupon
                 if coupon.present? and coupon.free_trial?
-                  # NOTE (Henrique):
-                  # I'm assuming coupons will be wisely used/created and will have equal or better
-                  # trial periods than the ones configured in your Stripe plans through their dashboard / API. 
-                  # We can not set both parameters trial_period_days and trial_from_plan when creating a new
-                  # subscription as it raises an exception:
-                  #
-                  # "You cannot set `trial_end` or `trial_period_days` when `trial_from_plan=true`."
-                  #
-                  # So if you assigned a coupon with one day free trial, and your plan has longer free trial,
-                  # the coupon trial period will be assigned for this subscription instead of the plan one.
-                  if coupon.free_trial_length.present?
+                  stripe_plan = Stripe::Plan.retrieve(self.plan.stripe_id)
+                  plan_trial_period = stripe_plan.trial_period_days.to_i
+
+                  # Apply coupons only if their free trial is bigger than the plan free trial
+                  if coupon.free_trial_length.present? && plan_trial_period < coupon.free_trial_length
                     subscription_attributes.delete(:trial_from_plan)
                     subscription_attributes[:trial_period_days] = coupon.free_trial_length
-                  elsif coupon.free_trial_ends.present?
+                  elsif coupon.free_trial_ends.present? && plan_trial_period < (coupon.free_trial_ends - DateTime.now)
                     subscription_attributes.delete(:trial_from_plan)
                     subscription_attributes[:trial_end] = coupon.free_trial_ends.to_i
                   end
