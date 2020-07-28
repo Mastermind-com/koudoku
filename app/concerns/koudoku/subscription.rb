@@ -113,21 +113,28 @@ module Koudoku::Subscription
                 trial_from_plan: true
               }
 
+              
+              current_datetime =  DateTime.now
+              free_trial_days = Stripe::Plan.retrieve(self.plan.stripe_id).trial_period_days.to_i
+              free_trial_end_date = current_datetime + free_trial_days.days
               # If the class we're being included in supports coupons ..
               if respond_to? :coupon
                 if coupon.present? and coupon.free_trial?
-                  stripe_plan = Stripe::Plan.retrieve(self.plan.stripe_id)
-                  plan_trial_period = stripe_plan.trial_period_days.to_i
-
                   # Apply coupons only if their free trial is bigger than the plan free trial
-                  if coupon.free_trial_length.present? && plan_trial_period < coupon.free_trial_length
+                  if coupon.free_trial_length.present? && free_trial_days < coupon.free_trial_length
                     subscription_attributes.delete(:trial_from_plan)
                     subscription_attributes[:trial_period_days] = coupon.free_trial_length
-                  elsif coupon.free_trial_ends.present? && plan_trial_period < (coupon.free_trial_ends - DateTime.now)
+                    free_trial_end_date = current_datetime + coupon.free_trial_length.days
+                  elsif coupon.free_trial_ends.present? && free_trial_end_date < coupon.free_trial_ends
                     subscription_attributes.delete(:trial_from_plan)
                     subscription_attributes[:trial_end] = coupon.free_trial_ends.to_i
+                    free_trial_end_date = coupon.free_trial_ends 
                   end
                 end
+              end
+
+              if free_trial_end_date > current_datetime
+                self.trial_ends_on = free_trial_end_date
               end
 
               # If the class we're being included in supports Link Mink ..
