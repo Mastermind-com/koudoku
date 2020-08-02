@@ -208,7 +208,16 @@ module Koudoku
 
     def can_perform_action
       controller = ::ApplicationController.new
-      controller.try(:koudoku_can_perform_action, @owner, @subscription) if controller.respond_to?(:koudoku_can_perform_action)
+      user = nil
+      if respond_to?(:current_user) && @owner&.class&.name != current_user&.class&.name
+        user = current_user
+      end
+      if controller.respond_to?(:koudoku_can_perform_action)
+        res = controller.try(:koudoku_can_perform_action, @owner, @subscription, user)
+        if res.present? && res[:error_message].present?
+          redirect_to owner_subscription_path(@owner, @subscription), alert: res[:error_message]
+        end
+      end
     end
   end
 end
