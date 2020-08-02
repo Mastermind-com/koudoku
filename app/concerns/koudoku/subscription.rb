@@ -102,6 +102,8 @@ module Koudoku::Subscription
 
               finalize_new_customer!(customer.id, plan.price)
 
+              trial_from_plan = should_apply_free_trial_from_plan?
+
               subscription_attributes = {
                 customer: customer.id,
                 items:[
@@ -110,10 +112,9 @@ module Koudoku::Subscription
                     quantity: subscription_owner_quantity
                   }
                 ],
-                trial_from_plan: true
+                trial_from_plan: should_apply_free_trial_from_plan?
               }
 
-              
               current_datetime =  DateTime.now
               free_trial_days = Stripe::Plan.retrieve(self.plan.stripe_id).trial_period_days.to_i
               free_trial_end_date = current_datetime + free_trial_days.days
@@ -319,5 +320,9 @@ module Koudoku::Subscription
   def perform_cancel_subscription
     self.plan_id = nil
     self.save
+  end
+
+  def should_apply_free_trial_from_plan?
+    true
   end
 end

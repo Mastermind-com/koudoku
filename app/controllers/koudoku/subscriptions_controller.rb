@@ -4,6 +4,7 @@ module Koudoku
     before_action :show_existing_subscription, only: [:index, :new, :create], unless: :no_owner?
     before_action :load_subscription, only: [:show, :cancel, :edit, :update]
     before_action :load_plans, only: [:index, :edit]
+    before_action :can_perform_action, only: [:edit, :new, :create, :update, :cancel]
 
     def load_plans
       @plans = ::Plan.order(:display_order)
@@ -192,17 +193,22 @@ module Koudoku
 
     def after_new_subscription_message
       controller = ::ApplicationController.new
-      controller.respond_to?(:new_subscription_notice_message) ?
-          controller.try(:new_subscription_notice_message) :
+      controller.respond_to?(:koudoku_new_subscription_notice_message) ?
+          controller.try(:koudoku_new_subscription_notice_message) :
           I18n.t('koudoku.confirmations.subscription_upgraded')
     end
 
     # This path is used to redirect the user after a subscription cancellation is performed
     def after_cancelled_subscription_path
       controller = ::ApplicationController.new
-      controller.respond_to?(:cancel_subscription_path) ?
-        controller.try(:cancel_subscription_path) :
+      controller.respond_to?(:koudoku_cancel_subscription_path) ?
+        controller.try(:koudoku_cancel_subscription_path) :
         owner_subscription_path(@owner, @subscription)
+    end
+
+    def can_perform_action
+      controller = ::ApplicationController.new
+      controller.try(:koudoku_can_perform_action, @owner, @subscription) if controller.respond_to?(:koudoku_can_perform_action)
     end
   end
 end
