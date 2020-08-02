@@ -150,9 +150,8 @@ module Koudoku
 
     def cancel
       flash[:notice] = I18n.t('koudoku.confirmations.subscription_cancelled')
-      @subscription.plan_id = nil
-      @subscription.save
-      redirect_to owner_subscription_path(@owner, @subscription)
+      @subscription.perform_cancel_subscription
+      redirect_to after_cancelled_subscription_path
     end
 
     def edit
@@ -196,6 +195,14 @@ module Koudoku
       controller.respond_to?(:new_subscription_notice_message) ?
           controller.try(:new_subscription_notice_message) :
           I18n.t('koudoku.confirmations.subscription_upgraded')
+    end
+
+    # This path is used to redirect the user after a subscription cancellation is performed
+    def after_cancelled_subscription_path
+      controller = ::ApplicationController.new
+      controller.respond_to?(:cancel_subscription_path) ?
+        controller.try(:cancel_subscription_path) :
+        owner_subscription_path(@owner, @subscription)
     end
   end
 end

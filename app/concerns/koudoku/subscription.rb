@@ -315,4 +315,9 @@ module Koudoku::Subscription
   def charge_disputed
   end
 
+  # Your app can override the subscription cancelation on the subscription model
+  def perform_cancel_subscription
+    self.plan_id = nil
+    self.save
+  end
 end
