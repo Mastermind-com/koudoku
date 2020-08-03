@@ -117,7 +117,7 @@ module Koudoku::Subscription
 
               current_datetime =  DateTime.now
               free_trial_days = Stripe::Plan.retrieve(self.plan.stripe_id).trial_period_days.to_i
-              free_trial_end_date = current_datetime + free_trial_days.days
+              free_trial_end_date = should_apply_free_trial_from_plan? ? current_datetime + free_trial_days.days : current_datetime
               # If the class we're being included in supports coupons ..
               if respond_to? :coupon
                 if coupon.present? and coupon.free_trial?
