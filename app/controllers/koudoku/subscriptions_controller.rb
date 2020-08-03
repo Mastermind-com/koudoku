@@ -4,7 +4,7 @@ module Koudoku
     before_action :show_existing_subscription, only: [:index, :new, :create], unless: :no_owner?
     before_action :load_subscription, only: [:show, :cancel, :edit, :update]
     before_action :load_plans, only: [:index, :edit]
-    before_action :can_perform_action, only: [:edit, :new, :create, :update, :cancel]
+    before_action :can_perform_action, only: [:index, :edit, :new, :create, :update, :cancel]
 
     def load_plans
       @plans = ::Plan.order(:display_order)
@@ -208,14 +208,14 @@ module Koudoku
 
     def can_perform_action
       controller = ::ApplicationController.new
-      user = nil
-      if respond_to?(:current_user) && @owner&.class&.name != current_user&.class&.name
-        user = current_user
-      end
       if controller.respond_to?(:koudoku_can_perform_action)
-        res = controller.try(:koudoku_can_perform_action, @owner, @subscription, user)
+        res = controller.try(:koudoku_can_perform_action, self, @owner)
         if res.present? && res[:error_message].present?
-          redirect_to owner_subscription_path(@owner, @subscription), alert: res[:error_message]
+          if @owner.present? && @subscription.present?
+            redirect_to owner_subscription_path(@owner, @subscription), alert: res[:error_message]
+          else
+            redirect_to res[:default_redirect_to], alert: res[:error_message]
+          end
         end
       end
     end
