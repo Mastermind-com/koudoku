@@ -4,6 +4,7 @@ module Koudoku
     before_action :show_existing_subscription, only: [:index, :new, :create], unless: :no_owner?
     before_action :load_subscription, only: [:show, :cancel, :edit, :update]
     before_action :load_plans, only: [:index, :edit]
+    before_action :can_perform_action, only: [:index, :edit, :new, :create, :update, :cancel]
 
     def load_plans
       @plans = ::Plan.order(:display_order)
@@ -150,9 +151,8 @@ module Koudoku
 
     def cancel
       flash[:notice] = I18n.t('koudoku.confirmations.subscription_cancelled')
-      @subscription.plan_id = nil
-      @subscription.save
-      redirect_to owner_subscription_path(@owner, @subscription)
+      @subscription.perform_cancel_subscription
+      redirect_to after_cancelled_subscription_path
     end
 
     def edit
@@ -193,9 +193,31 @@ module Koudoku
 
     def after_new_subscription_message
       controller = ::ApplicationController.new
-      controller.respond_to?(:new_subscription_notice_message) ?
-          controller.try(:new_subscription_notice_message) :
+      controller.respond_to?(:koudoku_new_subscription_notice_message) ?
+          controller.try(:koudoku_new_subscription_notice_message) :
           I18n.t('koudoku.confirmations.subscription_upgraded')
+    end
+
+    # This path is used to redirect the user after a subscription cancellation is performed
+    def after_cancelled_subscription_path
+      controller = ::ApplicationController.new
+      controller.respond_to?(:koudoku_cancel_subscription_path) ?
+        controller.try(:koudoku_cancel_subscription_path) :
+        owner_subscription_path(@owner, @subscription)
+    end
+
+    def can_perform_action
+      controller = ::ApplicationController.new
+      if controller.respond_to?(:koudoku_can_perform_action)
+        res = controller.try(:koudoku_can_perform_action, self, @owner)
+        if res.present? && res[:error_message].present?
+          if @owner.present? && @subscription.present?
+            redirect_to owner_subscription_path(@owner, @subscription), alert: res[:error_message]
+          else
+            redirect_to res[:default_redirect_to], alert: res[:error_message]
+          end
+        end
+      end
     end
   end
 end
