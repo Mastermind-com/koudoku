@@ -95,8 +95,6 @@ module Koudoku::Subscription
                 end
               end
 
-              customer_attributes[:coupon] = @coupon_code if @coupon_code
-
               # create a customer at that package level.
               customer = Stripe::Customer.create(customer_attributes)
 
@@ -115,6 +113,11 @@ module Koudoku::Subscription
                 trial_from_plan: should_apply_free_trial_from_plan?
               }
 
+              if @coupon_code
+                subscription_attributes[:coupon] = @coupon_code
+                subscription_attributes.delete(:trial_from_plan)
+              end
+              
               current_datetime =  DateTime.now
               free_trial_days = Stripe::Plan.retrieve(self.plan.stripe_id).trial_period_days.to_i
               free_trial_end_date = should_apply_free_trial_from_plan? ? current_datetime + free_trial_days.days : current_datetime
