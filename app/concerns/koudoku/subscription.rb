@@ -39,6 +39,7 @@ module Koudoku::Subscription
 
             subscription_attributes = {
               prorate: Koudoku.prorate,
+              billing_cycle_anchor: Koudoku.billing_cycle_anchor,
               items:[
                 {
                   id: item_id,
