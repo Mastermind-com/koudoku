@@ -39,7 +39,6 @@ module Koudoku::Subscription
 
             subscription_attributes = {
               prorate: Koudoku.prorate,
-              billing_cycle_anchor: Koudoku.billing_cycle_anchor,
               items:[
                 {
                   id: item_id,
@@ -48,6 +47,10 @@ module Koudoku::Subscription
                 }
               ],
             }
+
+            subs_billing_cycle_anchor = subscription.billing_cycle_anchor
+            subscription_attributes[:billing_cycle_anchor] = subs_billing_cycle_anchor if subs_billing_cycle_anchor.present?
+
             Stripe::Subscription.update(subscription.id, subscription_attributes)
 
             finalize_downgrade! if downgrading?
@@ -328,5 +331,8 @@ module Koudoku::Subscription
 
   def should_apply_free_trial_from_plan?
     true
+  end
+
+  def billing_cycle_anchor
   end
 end

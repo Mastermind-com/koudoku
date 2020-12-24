@@ -27,8 +27,6 @@ module Koudoku
   mattr_accessor :prorate
   @@prorate = true
 
-  mattr_accessor :billing_cycle_anchor
-  @@billing_cycle_anchor = 'now'
 
   @@layout = nil
 
