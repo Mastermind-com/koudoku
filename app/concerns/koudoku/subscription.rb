@@ -48,7 +48,7 @@ module Koudoku::Subscription
               ],
             }
 
-            subs_billing_cycle_anchor = subscription.billing_cycle_anchor
+            subs_billing_cycle_anchor = self.billing_cycle_anchor
             subscription_attributes[:billing_cycle_anchor] = subs_billing_cycle_anchor if subs_billing_cycle_anchor.present?
 
             Stripe::Subscription.update(subscription.id, subscription_attributes)
