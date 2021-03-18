@@ -153,9 +153,11 @@ module Koudoku::Subscription
                 end
               end
 
-              if subscription_source.present?
-                subscription_attributes[:metadata] ||= {}
-                subscription_attributes[:metadata][:subscription_source] = subscription_source
+              if respond_to? :subscription_source
+                if subscription_source.present? && is_subscription_source_valid?
+                  subscription_attributes[:metadata] ||= {}
+                  subscription_attributes[:metadata][:subscription_source] = subscription_source
+                end
               end
 
               subscription = Stripe::Subscription.create(subscription_attributes)
@@ -337,6 +339,10 @@ module Koudoku::Subscription
 
   def should_apply_free_trial_from_plan?
     true
+  end
+
+  def is_subscription_source_valid?
+    false
   end
 
   def billing_cycle_anchor
