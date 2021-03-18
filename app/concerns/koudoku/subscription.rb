@@ -2,6 +2,7 @@ module Koudoku::Subscription
   extend ActiveSupport::Concern
 
   included do
+    attr_accessor :subscription_source
 
     # We don't store these one-time use tokens, but this is what Stripe provides
     # client-side after storing the credit card information.
@@ -150,6 +151,11 @@ module Koudoku::Subscription
                 if link_mink_id.present?
                   subscription_attributes[:metadata] = {identifier: link_mink_id}
                 end
+              end
+
+              if subscription_source.present?
+                subscription_attributes[:metadata] ||= {}
+                subscription_attributes[:metadata][:subscription_source] = subscription_source
               end
 
               subscription = Stripe::Subscription.create(subscription_attributes)
